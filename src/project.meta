@@ -13,20 +13,23 @@
     "audioOffset": 0
   },
   "preview": {
-    "fps": 30,
+    "fps": 60,
     "resolutionScale": 1
   },
   "rendering": {
     "fps": 60,
-    "resolutionScale": 1,
+    "resolutionScale": 2,
     "colorSpace": "srgb",
     "exporter": {
       "name": "@webcodecs",
       "options": {
         "includeAudio": true,
         "videoCodec": "h264",
-        "bitrate": 10000000,
-        "keyframeInterval": 200,
+        "videoCodecProfile": "High",
+        "videoCodecLevel": "5.1",
+        "bitrate": 200,
+        "keyframeInterval": 60,
+        "hardwarePreference": "prefer-software",
         "format": "h264"
       }
     }

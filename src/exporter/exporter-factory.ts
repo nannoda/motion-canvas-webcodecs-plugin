@@ -1,4 +1,11 @@
-import {BoolMetaField, EnumMetaField, MetaField, NumberMetaField, ObjectMetaField} from '@motion-canvas/core/lib/meta';
+import {
+  BoolMetaField,
+  EnumMetaField,
+  MetaField,
+  NumberMetaField,
+  ObjectMetaField,
+  StringMetaField
+} from '@motion-canvas/core/lib/meta';
 import type {SupportedVideoCodec, WebCodecsExporterOptions} from './meta-field';
 import type {Exporter, ExporterClass} from '@motion-canvas/core/lib/app/Exporter';
 import type {RendererSettings} from '@motion-canvas/core/lib/app/Renderer';
@@ -19,12 +26,22 @@ export const WebCodecExporterFactory: ExporterClass = {
         'format',
         [
           {text: 'H.264 (AVC)', value: 'h264'},
-          {text: 'H.265 ()', value: 'h265'},
-          {text: 'VP9', value: 'vp9'},
+          {text: 'H.265 (HEVC)', value: 'h265'},
         ],
       ) as EnumMetaField<SupportedVideoCodec>,
+      videoCodecProfile: new StringMetaField<string>('profile', 'Main'),
+      videoCodecLevel: new StringMetaField<string>('level', '5.1'),
       bitrate: new NumberMetaField('bitrate', 1_000_000),
       keyframeInterval: new NumberMetaField('keyframe interval', 200),
+      hardwarePreference: new EnumMetaField(
+        'hardware preference',
+        [
+          {text: 'Default', value: 'no-preference'},
+          {text: 'Prefer hardware', value: 'prefer-hardware'},
+          {text: 'Prefer software', value: 'prefer-software'},
+        ],
+      ) as EnumMetaField<HardwarePreference>,
+
     });
   }
 };

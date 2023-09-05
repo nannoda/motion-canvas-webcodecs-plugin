@@ -4,14 +4,14 @@ import type {RendererSettings} from '@motion-canvas/core/lib/app/Renderer';
 import {RendererResult} from '@motion-canvas/core/lib/app/Renderer';
 import RenderWorker from './render-worker?worker';
 import {MessageFromWorker, MessageToWorker, StopStatus, WebCodecsWorker} from './worker-types';
-import {AVC} from 'media-codecs';
+import {AVC, HEVC, VP} from 'media-codecs';
 import {WebCodecsExporterOptions} from './meta-field';
 
 export interface WebCodecsRendererSettings extends RendererSettings {
   exporter: {
     name: '@webcodecs';
     options: WebCodecsExporterOptions;
-  }
+  };
 }
 
 export class WebCodecsExporterClass implements Exporter {
@@ -71,7 +71,26 @@ export class WebCodecsExporterClass implements Exporter {
     const width = settings.size.width * settings.resolutionScale;
     const height = settings.size.height * settings.resolutionScale;
 
-    const codecString = '';
+
+    let versionStr = '';
+    const videoCodec = settings.exporter.options.videoCodec;
+    const videoCodecProfile = settings.exporter.options.videoCodecProfile;
+    const videoCodecLevel = settings.exporter.options.videoCodecLevel;
+
+    switch (settings.exporter.options.videoCodec) {
+      case 'h264':
+        versionStr = AVC.getCodec({profile: videoCodecProfile, level: videoCodecLevel});
+        break;
+      case 'h265':
+        versionStr = HEVC.getCodec({
+          profile: videoCodecProfile,
+          level: videoCodecLevel,
+          compatibility: 0,
+          tier: 'Main',
+          constraint: '',
+        });
+        break;
+    }
 
 
     await this.sendToWorker({
@@ -79,8 +98,9 @@ export class WebCodecsExporterClass implements Exporter {
       width,
       height,
       fps: settings.fps,
-      codec: AVC.getCodec({profile: 'Main', level: '5.1'}),
-      bitrate: settings.exporter.options.bitrate, // 5 Mbps
+      codec: this.settings.exporter.options.videoCodec,
+      codecVersion: versionStr,
+      bitrate: settings.exporter.options.bitrate || 5_000_000_000, // 5 Mbps
       keyframeInterval: settings.exporter.options.keyframeInterval,
       target: await this.getHandle(),
     });

@@ -1,3 +1,5 @@
+import type {SupportedVideoCodec} from './meta-field';
+
 export interface WebCodecsWorker {
   postMessage(message: MessageToWorker, transfer?: Transferable[]): void;
 
@@ -11,7 +13,8 @@ export interface ConfigurationMessageToWorker {
   width: number;
   height: number;
   fps: number;
-  codec: string;
+  codec: SupportedVideoCodec;
+  codecVersion: string;
   bitrate: number;
   keyframeInterval: number;
   target: FileSystemFileHandle;
