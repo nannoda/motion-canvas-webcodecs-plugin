@@ -17,41 +17,38 @@ export interface WebCodecsRendererSettings extends RendererSettings {
 export class WebCodecsExporterClass implements Exporter {
   project: Project;
   settings: WebCodecsRendererSettings;
-  worker: WebCodecsWorker | null = null;
+  worker: WebCodecsWorker;
+  pastFrames: ImageBitmap[] = [];
+
+  fileHandle?: FileSystemFileHandle;
 
   constructor(project: Project, settings: WebCodecsRendererSettings) {
     this.project = project;
     this.settings = settings;
+    this.worker = new RenderWorker();
   }
 
   async sendToWorker(message: MessageToWorker): Promise<MessageFromWorker> {
     return new Promise((resolve, reject) => {
-      if (!this.worker) {
-        reject('worker not started');
-        return;
-      }
       const worker = this.worker;
       this.worker.onmessage = (event) => {
         resolve(event.data);
       };
       switch (message.type) {
-        case 'configuration':
-          worker.postMessage(message);
-          break;
         case 'frame':
           worker.postMessage(message, [message.content]);
           break;
         default:
           worker.postMessage(message);
+          break;
       }
     });
   }
 
-  async configuration(): Promise<RendererSettings | void> {
-    return this.settings;
-  }
-
   async getHandle(): Promise<FileSystemFileHandle> {
+    if (this.fileHandle) {
+      return this.fileHandle;
+    }
     const options = {
       types: [
         {
@@ -60,23 +57,20 @@ export class WebCodecsExporterClass implements Exporter {
         },
       ],
     };
-    return await window.showSaveFilePicker(options);
+    this.fileHandle = await window.showSaveFilePicker(options);
+    return this.fileHandle;
   }
 
-
   async start(): Promise<void> {
-    this.worker = new RenderWorker();
     const settings = this.settings;
-
     const width = settings.size.width * settings.resolutionScale;
     const height = settings.size.height * settings.resolutionScale;
-
+    this.pastFrames = [];
 
     let versionStr = '';
     const videoCodec = settings.exporter.options.videoCodec;
     const videoCodecProfile = settings.exporter.options.videoCodecProfile;
     const videoCodecLevel = settings.exporter.options.videoCodecLevel;
-
     switch (settings.exporter.options.videoCodec) {
       case 'h264':
         versionStr = AVC.getCodec({profile: videoCodecProfile, level: videoCodecLevel});
@@ -91,28 +85,41 @@ export class WebCodecsExporterClass implements Exporter {
         });
         break;
     }
-
-
-    await this.sendToWorker({
+    const configResult = await this.sendToWorker({
       type: 'configuration',
       width,
       height,
       fps: settings.fps,
-      codec: this.settings.exporter.options.videoCodec,
+      codec: videoCodec,
       codecVersion: versionStr,
-      bitrate: settings.exporter.options.bitrate || 5_000_000_000, // 5 Mbps
+      bitrate: settings.exporter.options.bitrate, // 5 Mbps
       keyframeInterval: settings.exporter.options.keyframeInterval,
       target: await this.getHandle(),
     });
-
-    const result = await this.sendToWorker({type: 'start'});
-    if (result.error) {
-      this.error(result.error);
+    if (configResult.error) {
+      this.error(configResult.error);
+    }
+    const startResult = await this.sendToWorker({type: 'start'});
+    if (startResult.error) {
+      this.error(startResult.error);
     }
   }
 
   async handleFrame(canvas: HTMLCanvasElement, frame: number, sceneFrame: number, sceneName: string, signal: AbortSignal): Promise<void> {
-    const content = await createImageBitmap(canvas);
+    if (this.pastFrames.length > this.settings.exporter.options.frameMixing) {
+      this.pastFrames.shift();
+    }
+
+    const _canvas = new OffscreenCanvas(canvas.width, canvas.height);
+    const _ctx = _canvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
+    _ctx.globalAlpha = 1 / (this.pastFrames.length + 1);
+    this.pastFrames.push(await createImageBitmap(canvas));
+
+    for (const pastFrame of this.pastFrames) {
+      _ctx.drawImage(pastFrame, 0, 0);
+    }
+    const content = await createImageBitmap(_canvas);
+
     const result = await this.sendToWorker({type: 'frame', frame, content});
     if (result.error) {
       this.project.logger.error(result.error);
@@ -136,7 +143,6 @@ export class WebCodecsExporterClass implements Exporter {
         status = 'error';
         break;
     }
-
 
     await this.sendToWorker(
       {

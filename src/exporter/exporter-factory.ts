@@ -41,7 +41,7 @@ export const WebCodecExporterFactory: ExporterClass = {
           {text: 'Prefer software', value: 'prefer-software'},
         ],
       ) as EnumMetaField<HardwarePreference>,
-
+      frameMixing: new NumberMetaField('frame mixing', 0),
     });
   }
 };

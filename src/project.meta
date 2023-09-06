@@ -1,7 +1,7 @@
 {
   "version": 0,
   "shared": {
-    "background": null,
+    "background": "rgb(255,255,255)",
     "range": [
       0,
       null
@@ -17,8 +17,8 @@
     "resolutionScale": 1
   },
   "rendering": {
-    "fps": 60,
-    "resolutionScale": 2,
+    "fps": 240,
+    "resolutionScale": 1,
     "colorSpace": "srgb",
     "exporter": {
       "name": "@webcodecs",
@@ -27,9 +27,11 @@
         "videoCodec": "h264",
         "videoCodecProfile": "High",
         "videoCodecLevel": "5.1",
-        "bitrate": 200,
+        "bitrate": 200000000,
         "keyframeInterval": 60,
-        "hardwarePreference": "prefer-software",
+        "hardwarePreference": "prefer-hardware",
+        "frameMixing": 8,
+        "enableMotionBlur": true,
         "format": "h264"
       }
     }

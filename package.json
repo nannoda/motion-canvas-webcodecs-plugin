@@ -1,11 +1,17 @@
 {
   "name": "motion-canvas-webcodecs-plugin",
-  "private": true,
   "version": "0.0.0",
   "scripts": {
     "serve": "vite",
     "build": "tsc && vite build"
   },
+  "files": [
+    "./src/exporter/index.ts"
+  ],
+  "exports": {
+    ".": "./src/exporter/index.ts"
+  },
+  "types": "./src/exporter/index.ts",
   "dependencies": {
     "@motion-canvas/2d": "^3.10.1",
     "@motion-canvas/core": "^3.10.0",

@@ -90,8 +90,7 @@ class OffScreenVideoExporter {
     const init: VideoEncoderInit = {
       output: this.handleChunk.bind(this),
       error: (error) => {
-        console.log('error in encoder');
-        console.log(error);
+        throw new Error(error.message);
       }
     };
     this.encoder = new VideoEncoder(init);
@@ -113,7 +112,11 @@ class OffScreenVideoExporter {
 
     const fps = this.config.fps as number;
 
-    const videoFrame: VideoFrame = new VideoFrame(this.canvas, {
+    const tmpCanvas = new OffscreenCanvas(this.canvas.width, this.canvas.height);
+    const tmpCtx = tmpCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
+    tmpCtx.drawImage(this.canvas, 0, 0);
+
+    const videoFrame: VideoFrame = new VideoFrame(tmpCanvas, {
       timestamp: Math.floor(this.currentFrame * (1_000_000 / fps)),
       duration: 1_000_000 / fps,
     });
@@ -150,7 +153,6 @@ async function start(message: StartMessageToWorker) {
 
 async function frame(message: FrameMessageToWorker) {
   if (!exporter) {
-    // throw new Error('No exporter [frame]');
     return;
   }
   await exporter.encodeFrame(message.content);

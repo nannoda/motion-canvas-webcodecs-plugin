@@ -8,4 +8,5 @@ export interface WebCodecsExporterOptions {
   bitrate: number;
   keyframeInterval: number;
   hardwarePreference: HardwarePreference;
+  frameMixing: number;
 }
