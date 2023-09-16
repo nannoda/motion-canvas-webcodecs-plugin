@@ -21,10 +21,16 @@
     "resolutionScale": 1,
     "colorSpace": "srgb",
     "exporter": {
-      "name": "@motion-canvas/ffmpeg",
+      "name": "@webcodecs",
       "options": {
-        "fastStart": true,
-        "includeAudio": true
+        "includeAudio": true,
+        "videoCodec": "h264",
+        "videoCodecProfile": "Main",
+        "videoCodecLevel": "5.1",
+        "bitrate": 1000000,
+        "keyframeInterval": 200,
+        "hardwarePreference": "no-preference",
+        "frameMixing": 0
       }
     }
   }
