@@ -18,6 +18,7 @@ export interface ConfigurationMessageToWorker {
   bitrate: number;
   keyframeInterval: number;
   target: FileSystemFileHandle;
+  audio?: string;
 }
 
 

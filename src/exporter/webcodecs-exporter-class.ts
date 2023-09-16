@@ -67,6 +67,21 @@ export class WebCodecsExporterClass implements Exporter {
     const height = settings.size.height * settings.resolutionScale;
     this.pastFrames = [];
 
+    // if (this.project.audio) {
+    //   console.log('audio', this.project.audio);
+    //   const audioSrc: string = this.project.audio;
+    //   const audio = await fetch(audioSrc);
+    //   const audioBuffer = await audio.arrayBuffer();
+    //   const audioContext = new AudioContext();
+    //   const audioBufferSource = audioContext.createBufferSource();
+    //   const audioBufferSourcePromise = audioContext.decodeAudioData(audioBuffer);
+    //   audioContext.
+    //   const t = await audioBufferSourcePromise;
+    //   audioBufferSource.buffer = t;
+    //   audioBufferSource.connect(audioContext.destination);
+    //   audioBufferSource.start();
+    // }
+
     let versionStr = '';
     const videoCodec = settings.exporter.options.videoCodec;
     const videoCodecProfile = settings.exporter.options.videoCodecProfile;
@@ -95,6 +110,7 @@ export class WebCodecsExporterClass implements Exporter {
       bitrate: settings.exporter.options.bitrate, // 5 Mbps
       keyframeInterval: settings.exporter.options.keyframeInterval,
       target: await this.getHandle(),
+      audio: this.project.audio,
     });
     if (configResult.error) {
       this.error(configResult.error);
@@ -105,9 +121,17 @@ export class WebCodecsExporterClass implements Exporter {
     }
   }
 
+  shouldMixFrame(sceneName: string): boolean {
+    return sceneName.endsWith('@mix');
+  }
+
   async handleFrame(canvas: HTMLCanvasElement, frame: number, sceneFrame: number, sceneName: string, signal: AbortSignal): Promise<void> {
     if (this.pastFrames.length > this.settings.exporter.options.frameMixing) {
       this.pastFrames.shift();
+    }
+
+    if (!this.shouldMixFrame(sceneName)) {
+      this.pastFrames = [];
     }
 
     const _canvas = new OffscreenCanvas(canvas.width, canvas.height);

@@ -64,6 +64,8 @@ class OffScreenVideoExporter {
     const target: FileSystemWritableFileStreamTarget = new FileSystemWritableFileStreamTarget(stream);
     this.stream = stream;
 
+    // this.muxer.addAudioChunk()
+
     let codecForMuxer: 'avc' | 'hevc' = 'avc';
 
     switch (config.codec) {
@@ -109,9 +111,7 @@ class OffScreenVideoExporter {
   public async encodeFrame(frame: ImageBitmap) {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.drawImage(frame, 0, 0);
-
     const fps = this.config.fps as number;
-
     const tmpCanvas = new OffscreenCanvas(this.canvas.width, this.canvas.height);
     const tmpCtx = tmpCanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
     tmpCtx.drawImage(this.canvas, 0, 0);
@@ -138,9 +138,38 @@ let exporter: OffScreenVideoExporter | null = null;
 async function configuration(message: ConfigurationMessageToWorker) {
   const support = await VideoEncoder.isConfigSupported(getVideoConfig(message));
   if (!support.supported) {
-    throw new Error('Unsupported configuration');
+    throw new Error('Configuration not supported');
   }
-  const writableStream = await message.target.createWritable();
+  const writableStream = await message.target.createWritable({
+    keepExistingData: false,
+  });
+
+  // const audioArrayBuffer = await fetch(message.audio as string).then((r) => r.arrayBuffer());
+  // const audioContext = new AudioContext();
+  // const audioBuffer = await audioContext.decodeAudioData(audioArrayBuffer);
+  // const audioEncoder = new AudioEncoder({
+  //     output: (chunk, metadata) => {
+  //       console.log('audio', chunk, metadata);
+  //     },
+  //     error: (error) => {
+  //       throw new Error(error.message);
+  //     }
+  //   }
+  // );
+  // audioEncoder.configure({
+  //   codec: 'opus',
+  //   numberOfChannels: audioBuffer.numberOfChannels,
+  //   sampleRate: audioBuffer.sampleRate,
+  //   bitrate: 128_000,
+  // });
+  // const audioData = new AudioData(
+  //   {
+  //     data: audioBuffer,
+  //     timestamp: 0,
+  //   }
+  // )
+
+
   exporter = new OffScreenVideoExporter(message, writableStream);
 }
 
